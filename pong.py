@@ -17,6 +17,11 @@ if not os.path.exists(MODEL_SAVE_PATH):
 	os.mkdir(MODEL_SAVE_PATH)
 	print("{} generated..".format(MODEL_SAVE_PATH))
 
+MODEL_HISTORY_PATH = os.path.join(".", "pong_historys")
+if not os.path.exists(MODEL_HISTORY_PATH):
+	os.mkdir(MODEL_HISTORY_PATH)
+	print("{} generated..".format(MODEL_HISTORY_PATH))
+
 is_learning  = args.learning
 if args.resume_step == 0 :
 	is_resume, chp_step = False, 0
@@ -31,7 +36,9 @@ batch_size = 10
 lr = 1e-4				# learning rate
 discount_rate = 0.99 	# discount factor for reward
 decay_rate = 0.99		# decay factor for RMSProp
-model_save_step = 500	# model save step
+model_save_step = 300	# model save step
+model_history_step = 100 # mdoel history save step
+max_step = 30000		# max step for training
 
 INPUT_DIM = 80 * 80 	# input dimensionality: 80 * 80 grid
 
@@ -44,6 +51,9 @@ else:
 
 grad_buffer = {k:np.zeros_like(v) for k, v in model.items()} # update buffers that add up gradients over a batch
 rmsprop_cache = {k:np.zeros_like(v) for k, v in model.items()} 
+historys = {'episode_numbers':[], 
+			'episode_rewards':[],
+			'running_means':[]}
 
 def _sigmoid(x):
 	return 1.0/(1.0 + np.exp(-x))
@@ -111,7 +121,7 @@ if not is_learning:
 			print("play done..")
 			break
 else:
-	while True:
+	while episode_number <= max_step:
 		if is_render:
 			env.render()
 
@@ -173,9 +183,16 @@ else:
 
 			running_reward = reward_sum if running_reward is None else running_reward * 0.99 + reward_sum * 0.01
 			print('Reset env. Episode reward total was : {}. running mean : {}'.format(reward_sum, running_reward))
+			
+			if episode_number % model_history_step == 0:
+				historys['episode_numbers'].append(episode_number)
+				historys['episode_rewards'].append(reward_sum)
+				historys['running_means'].append(running_reward) 
+			
 			if episode_number % model_save_step == 0:
 				pickle.dump(model, open(os.path.join(MODEL_SAVE_PATH, 'save_ep{}.p'.format(episode_number)), 'wb'))
-
+				pickle.dump(historys, open(os.path.join(MODEL_HISTORY_PATH, 'history.p'), 'wb'))
+			
 			reward_sum = 0
 			observation = env.reset() # reset env
 			prev_x = None
