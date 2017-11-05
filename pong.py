@@ -31,7 +31,7 @@ batch_size = 10
 lr = 1e-4				# learning rate
 discount_rate = 0.99 	# discount factor for reward
 decay_rate = 0.99		# decay factor for RMSProp
-model_save_step = 10	# model save step
+model_save_step = 500	# model save step
 
 INPUT_DIM = 80 * 80 	# input dimensionality: 80 * 80 grid
 
