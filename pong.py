@@ -3,11 +3,27 @@ import gym
 import pickle
 import matplotlib.pyplot as plt
 import random
+import argparse
+import os
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--learning", default=True)
+parser.add_argument("--render" , default=False)
+parser.add_argument("--resume_step", default=0, type=int)
+args = parser.parse_args()
 
-is_learning  = True
-is_resume, chp_step = False, 0		# using checkpoint?
-is_render = False
+MODEL_SAVE_PATH = os.path.join(".", 'pong_models')
+if not os.path.exists(MODEL_SAVE_PATH):
+	os.mkdir(MODEL_SAVE_PATH)
+	print("{} generated..".format(MODEL_SAVE_PATH))
+
+is_learning  = args.learning
+if args.resume_step == 0 :
+	is_resume, chp_step = False, 0
+else:
+	is_resume, chp_step = True, args.resume_step	# using checkpoint?
+
+is_render = args.render
 
 # Hyperparameters
 HIDDEN_NEURONS = 200	# number of hidden layer neurons
@@ -15,12 +31,12 @@ batch_size = 10
 lr = 1e-4				# learning rate
 discount_rate = 0.99 	# discount factor for reward
 decay_rate = 0.99		# decay factor for RMSProp
-
+model_save_step = 10	# model save step
 
 INPUT_DIM = 80 * 80 	# input dimensionality: 80 * 80 grid
 
 if is_resume:
-	model = pickle.load(open('save_ep{}.p'.format(chp_step), 'rb'))
+	model = pickle.load(open(os.path.join(MODEL_SAVE_PATH, 'save_ep{}.p'.format(chp_step)), 'rb'))
 else:
 	model = {}
 	model['W1'] = np.random.randn(HIDDEN_NEURONS, INPUT_DIM) / np.sqrt(INPUT_DIM) # "xavier" initialization
@@ -75,7 +91,7 @@ prev_x = None # using for computing the difference frame
 xs, hs, dlogps, drs = [], [], [], []
 running_reward = None
 reward_sum = 0
-episode_number = 0
+episode_number = chp_step
 
 
 if not is_learning:
@@ -157,8 +173,8 @@ else:
 
 			running_reward = reward_sum if running_reward is None else running_reward * 0.99 + reward_sum * 0.01
 			print('Reset env. Episode reward total was : {}. running mean : {}'.format(reward_sum, running_reward))
-			if episode_number % 100 == 0:
-				pickle.dump(model, open('save_ep{}.p'.format(episode_number), 'wb'))
+			if episode_number % model_save_step == 0:
+				pickle.dump(model, open(os.path.join(MODEL_SAVE_PATH, 'save_ep{}.p'.format(episode_number)), 'wb'))
 
 			reward_sum = 0
 			observation = env.reset() # reset env
