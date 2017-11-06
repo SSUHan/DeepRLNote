@@ -7,8 +7,9 @@ import argparse
 import os
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--learning", default=True)
-parser.add_argument("--render" , default=False)
+parser.add_argument("--learning", default=False, type=bool)
+parser.add_argument('--random', default=False, type=bool)
+parser.add_argument("--render" , default=False, type=bool)
 parser.add_argument("--resume_step", default=0, type=int)
 args = parser.parse_args()
 
@@ -43,8 +44,10 @@ max_step = 30000		# max step for training
 INPUT_DIM = 80 * 80 	# input dimensionality: 80 * 80 grid
 
 if is_resume:
+	print("load step : {} weights".format(chp_step))
 	model = pickle.load(open(os.path.join(MODEL_SAVE_PATH, 'save_ep{}.p'.format(chp_step)), 'rb'))
 else:
+	print("create new model..")
 	model = {}
 	model['W1'] = np.random.randn(HIDDEN_NEURONS, INPUT_DIM) / np.sqrt(INPUT_DIM) # "xavier" initialization
 	model['W2'] = np.random.randn(HIDDEN_NEURONS) / np.sqrt(HIDDEN_NEURONS)
@@ -103,17 +106,49 @@ running_reward = None
 reward_sum = 0
 episode_number = chp_step
 
+if args.random:
+	plt.imshow(observation)
+	plt.show()
+
+	plt.imshow(preprocessing(observation).reshape(80,80), cmap='gray')
+	plt.show()
+
+	while True:
+		env.render()
+		
+		observation, reward, done, info = env.step(random.randint(1,3))
+		if reward != 0.0:
+			print(reward)
+		
+		if done:
+			print("play done..")
+			break
+exit(0)
 
 if not is_learning:
 	plt.imshow(observation)
 	plt.show()
 
-	plt.imshow(preprocessing(observation), cmap='gray')
+	plt.imshow(preprocessing(observation).reshape(80,80), cmap='gray')
 	plt.show()
 
 	while True:
 		env.render()
-		observation, reward, done, info = env.step(random.randint(1,3))
+		
+		current_x = preprocessing(observation)
+		if prev_x is not None:
+			x = current_x - prev_x
+		else:
+			x = np.zeros(INPUT_DIM)
+		prev_x = current_x
+		
+		aprob, h = policy_forward(x)
+		if aprob > 0.5:
+			action = 2
+		else:
+			action = 3
+		
+		observation, reward, done, info = env.step(action)
 		if reward != 0.0:
 			print(reward)
 		
