@@ -1,3 +1,4 @@
 pong_models/
 pong_historys/
 __pycache__/
+*.png
