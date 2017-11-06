@@ -123,7 +123,7 @@ if args.random:
 		if done:
 			print("play done..")
 			break
-exit(0)
+	exit(0)
 
 if not is_learning:
 	plt.imshow(observation)
