@@ -39,7 +39,7 @@ discount_rate = 0.99 	# discount factor for reward
 decay_rate = 0.99		# decay factor for RMSProp
 model_save_step = 300	# model save step
 model_history_step = 100 # mdoel history save step
-max_step = 30000		# max step for training
+max_step = 60000		# max step for training
 
 INPUT_DIM = 80 * 80 	# input dimensionality: 80 * 80 grid
 
